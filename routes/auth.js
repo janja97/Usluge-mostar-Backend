@@ -9,7 +9,8 @@ const authMiddleware = require('../middleware/auth');
 router.post('/register', async (req, res) => {
   try {
     const { fullName, email, password, phone, city } = req.body;
-    if (!fullName || !email || !password) return res.status(400).json({ message: 'Missing fields' });
+    if (!fullName || !email || !password)
+      return res.status(400).json({ message: 'Missing fields' });
 
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
@@ -21,7 +22,10 @@ router.post('/register', async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, fullName: user.fullName, email: user.email, phone: user.phone, city: user.city } });
+    res.json({
+      token,
+      user: { id: user._id, fullName: user.fullName, email: user.email, phone: user.phone, city: user.city }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -32,7 +36,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Missing fields' });
+    if (!email || !password)
+      return res.status(400).json({ message: 'Missing fields' });
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });

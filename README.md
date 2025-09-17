@@ -8,46 +8,51 @@
 ---
 
 ## 🌟 About the Project  
-This is a **full-stack web application** built to showcase my skills as a developer.  
-The idea: a platform where people in **Mostar** (and later other cities) can **offer or search for services** – from small tasks and freelance jobs to professional services.  
+**Usluge Mostar** is a **full-stack web application** designed to create a platform where people in **Mostar** (and later other cities) can:  
+- **Post services** they offer  
+- **Search for services** they need  
+- **Register and log in** to the platform  
+- **Connect with other users**  
 
-The project is also part of my **portfolio** to demonstrate coding quality, structure, and the ability to deliver complete solutions.  
+This project also serves as part of my **portfolio**, showcasing my ability to build complete web solutions – from backend logic to frontend user interfaces.  
 
 ---
 
 ## ✨ Demo Preview  
-📸 *Screenshots will be added here once the UI pages are polished.*  
+📸 *Screenshots will be added once the UI design is finalized.*  
 
 - **Login Page** – User authentication with JWT  
 - **Register Page** – Create an account and join the platform  
-- **Future Pages** – Service listing, profile management, messaging system  
+- **Services Page** – Browse and post services (in progress)  
+- **Profile Page** – Edit user info (planned)  
 
 ---
 
 ## 🚀 Features Implemented So Far  
 
 ### 🔐 Backend (Node.js + Express)  
-- API server with Express  
-- MongoDB connection with Mongoose  
-- **User authentication** (Register/Login with JWT)  
+- Express-based API server  
+- MongoDB connection via Mongoose  
+- **User Authentication**: Register & Login with JWT  
 - Password encryption with bcrypt  
 - `.env` configuration for sensitive data  
 
 ### 🎨 Frontend (Vue.js 3 + Tailwind)  
-- Vue Router setup for navigation  
-- **Login Page** – with error handling & JWT storage in `localStorage`  
-- **Register Page** – basic structure ready  
-- Axios HTTP client integrated  
-- Tailwind CSS configured (light mode forced by default)  
+- Vue Router set up for navigation  
+- **Login Page** – error handling & JWT stored in `localStorage`  
+- **Register Page** – user registration ready  
+- Axios integrated for API requests  
+- TailwindCSS configured  
 
 ---
 
 ## 🎯 Next Steps  
-- Build **profile page** (update/view user info)  
-- Add functionality for **creating & browsing services**  
-- Role-based features (providers vs. seekers)  
-- Improve UI with Tailwind & animations  
-- Deploy project (Netlify + Render/Heroku)  
+- Add **create, edit, and delete service** functionality  
+- Implement **service search and filtering**  
+- Develop **profile page** (update/view user info)  
+- Introduce **role-based features** (providers vs. seekers)  
+- Improve UI with Tailwind animations & responsive design  
+- Deploy project (Netlify for frontend + Render/Heroku for backend)  
 
 ---
 
@@ -69,6 +74,8 @@ The project is also part of my **portfolio** to demonstrate coding quality, stru
 ---
 
 ## 📂 Project Structure  
+
+
 
 usluge-mostar/
 │
@@ -100,12 +107,10 @@ npm run dev
 ## 💡 Motivation
 
 ## This project shows my ability to:
-✔️ Work across frontend & backend
+✔️ Develop both frontend & backend systems
 ✔️ Apply modern web technologies
-✔️ Write clean, structured code
-✔️ Continuously learn & improve
-
-I want employers to see not only working code but also professional presentation.
+✔️ Write clean and structured code
+✔️ Continuously learn and improve
 
 ## 📬 Contact
 

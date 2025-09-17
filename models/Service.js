@@ -1,0 +1,14 @@
+const mongoose = require('mongoose');
+
+const serviceSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  category: { type: String, required: true },
+  subcategory: { type: String },
+  customService: { type: String },
+  priceType: { type: String },
+  price: { type: Number },
+  description: { type: String, maxlength: 200 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Service', serviceSchema);
