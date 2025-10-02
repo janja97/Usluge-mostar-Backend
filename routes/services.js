@@ -7,7 +7,7 @@ const router = express.Router();
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const userId = req.userId;
-    const { category, subcategory, customService, priceType, price, description } = req.body;
+    const { category, subcategory, customService, priceType, price, description, city, workingDays, workingHours } = req.body;
 
     if (!category) return res.status(400).json({ message: 'Kategorija je obavezna' });
 
@@ -23,7 +23,10 @@ router.post('/', authMiddleware, async (req, res) => {
       customService: customService || '',
       priceType: priceType || '',
       price: price !== undefined ? price : null,
-      description: description || ''
+      description: description || '',
+      city: city || '',
+      workingDays: workingDays || [],
+      workingHours: workingHours || { from: '', to: '' }
     });
 
     const savedService = await newService.save();
@@ -37,17 +40,18 @@ router.post('/', authMiddleware, async (req, res) => {
 // ------------------ READ MY ------------------
 router.get('/my', authMiddleware, async (req, res) => {
   try {
-    const services = await Service.find({ user: req.userId });
+    const services = await Service.find({ user: req.userId }).populate('user', 'fullName');
     res.json(services);
   } catch (err) {
+    console.error('❌ Greška kod dohvata mojih usluga:', err);
     res.status(500).json({ message: 'Greška servera' });
   }
 });
 
 // ------------------ READ ALL ------------------
-router.get('/all', async (req, res) => {
+router.get('/', async (req, res) => {  // Promijenjeno iz '/services' u '/' kako bi ruta bila /api/services
   try {
-    const services = await Service.find();
+    const services = await Service.find().populate('user', 'fullName');
     res.json(services);
   } catch (err) {
     console.error('❌ Greška kod dohvata svih usluga:', err);
@@ -55,6 +59,47 @@ router.get('/all', async (req, res) => {
   }
 });
 
+// ------------------ FILTER ------------------
+router.get('/filter', async (req, res) => {
+  try {
+
+    const { category, subcategory, customService, priceType, minPrice, maxPrice, city } = req.query
+    const filter = {}
+
+    if (category) filter.category = category
+    if (subcategory) filter.subcategory = subcategory
+    if (customService) filter.customService = customService
+    if (priceType) filter.priceType = priceType
+    if (city) filter.city = city
+    if (minPrice || maxPrice) {
+      filter.price = {}
+      if (minPrice) filter.price.$gte = Number(minPrice)
+      if (maxPrice) filter.price.$lte = Number(maxPrice)
+    }
+
+
+    const services = await Service.find(filter).populate('user', 'fullName')
+
+    res.json(services)
+  } catch (err) {
+    console.error('❌ Greška kod filtriranja usluga:', err)
+    res.status(500).json({ message: 'Greška servera' })
+  }
+})
+
+// ---------------- READ service by ID ----------
+router.get('/:id', async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id).populate('user', 'fullName email');
+    if (!service) {
+      return res.status(404).json({ message: 'Usluga nije pronađena' });
+    }
+    res.json(service);
+  } catch (err) {
+    console.error('❌ Greška kod dohvata usluge po ID-u:', err);
+    res.status(500).json({ message: 'Greška servera' });
+  }
+});
 // ------------------ UPDATE ------------------
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
@@ -62,7 +107,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     const service = await Service.findOne({ _id: id, user: req.userId });
     if (!service) return res.status(404).json({ message: 'Usluga nije pronađena' });
 
-    const { category, subcategory, customService, priceType, price, description } = req.body;
+    const { category, subcategory, customService, priceType, price, description, city, workingDays, workingHours } = req.body;
 
     if (description) {
       const wordCount = description.trim().split(/\s+/).length;
@@ -75,6 +120,9 @@ router.put('/:id', authMiddleware, async (req, res) => {
     service.priceType = priceType || service.priceType;
     service.price = price !== undefined ? price : service.price;
     service.description = description || service.description;
+    service.city = city || service.city;
+    service.workingDays = workingDays || service.workingDays;
+    service.workingHours = workingHours || service.workingHours;
 
     const updatedService = await service.save();
     res.json(updatedService);
@@ -98,28 +146,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ------------------ FILTER ------------------
-router.get('/filter', async (req, res) => {
-  try {
-    const { category, subcategory, customService, priceType, minPrice, maxPrice } = req.query;
-    const filter = {};
 
-    if (category) filter.category = category;
-    if (subcategory) filter.subcategory = subcategory;
-    if (customService) filter.customService = customService;
-    if (priceType) filter.priceType = priceType;
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
 
-    const services = await Service.find(filter);
-    res.json(services);
-  } catch (err) {
-    console.error('❌ Greška kod filtriranja usluga:', err);
-    res.status(500).json({ message: 'Greška servera' });
-  }
-});
 
 module.exports = router;

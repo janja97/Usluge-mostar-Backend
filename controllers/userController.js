@@ -7,7 +7,6 @@ exports.updateProfile = async (req, res) => {
     const userId = req.userId; 
     const data = req.body;
 
-    console.log("Payload koji dolazi:", data);  // <-- dodaj ovo za debugging
 
     const user = await User.findByIdAndUpdate(
       userId,
