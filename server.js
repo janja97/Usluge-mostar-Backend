@@ -2,18 +2,24 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
 
 // Rute
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
-const serviceRoutes = require('./routes/services'); 
+const serviceRoutes = require('./routes/services');
 
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use("/user", userRoutes);
+
+// **Serviraj uploads folder statički**
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+app.use('/uploads', express.static(uploadsDir));
 
 // API rute
 app.use('/api/auth', authRoutes);

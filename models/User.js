@@ -2,10 +2,9 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  email:    { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
 
-  // Osnovni podaci
   birthYear: {
     type: Number,
     min: 1900,
@@ -13,13 +12,11 @@ const userSchema = new mongoose.Schema({
   },
   profession: { type: String, maxlength: 100 },
   city: { type: String, maxlength: 100 },
-  phone: {
-    type: String,
-    maxlength: 20,
-    match: /^[0-9+\-\s]*$/ 
-  },
-  about: { type: String, maxlength: 500 }, 
+  phone: { type: String, maxlength: 20, match: /^[0-9+\-\s]*$/ },
+  about: { type: String, maxlength: 500 },
   avatar: String,
+
+  isActive: { type: Boolean, default: true }, 
 
   createdAt: { type: Date, default: Date.now }
 });
