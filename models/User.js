@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -18,7 +19,12 @@ const userSchema = new mongoose.Schema({
 
   isActive: { type: Boolean, default: true }, 
 
+  favorites: [
+    { type: mongoose.Schema.Types.ObjectId, ref: 'Service' } // NOVO
+  ],
+
   createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);
+

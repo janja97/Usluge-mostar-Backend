@@ -9,6 +9,7 @@ const fs = require('fs');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/services');
+const favoritesRoutes = require('./routes/favorites'); // <-- dodano
 
 const app = express();
 
@@ -25,7 +26,9 @@ app.use('/uploads', express.static(uploadsDir));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/favorites', favoritesRoutes); // <-- dodano
 
+// Test route
 app.get('/', (req, res) => res.send('API is running'));
 
 // Port

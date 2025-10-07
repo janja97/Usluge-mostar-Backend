@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // Provjera da li je user aktivan
+    
     if (!user.isActive) {
       return res.status(403).json({ message: 'Your account has been deactivated' });
     }

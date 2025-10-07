@@ -7,6 +7,7 @@ const serviceSchema = new mongoose.Schema({
   customService: { type: String },
   priceType: { type: String },
   price: { type: Number },
+  city: { type: String},
   description: { type: String, maxlength: 200 },
   createdAt: { type: Date, default: Date.now }
 });
