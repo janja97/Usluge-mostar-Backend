@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
@@ -8,10 +7,12 @@ const User = require('../models/User');
 const Service = require('../models/Service');
 const { updateProfile, getProfile, deleteUser } = require('../controllers/userController');
 
-// Multer setup
+// -------------------------
+// Multer setup for image uploads
+// -------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/'); 
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -20,14 +21,35 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// -------------------------
+// Profile routes (for logged-in user)
+// -------------------------
+
 // PUT update profile with image upload
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
 
-// GET current profile
+// GET current user's profile
 router.get('/profile', authMiddleware, getProfile);
 
-// DELETE user
+// DELETE current user account
 router.delete('/profile', authMiddleware, deleteUser);
+
+// -------------------------
+// Public route: get user by ID (for viewing other profiles)
+// -------------------------
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-passwordHash') // ne vraćaj hash lozinke
+      .populate('favorites');  // ako imaš reference
+    if (!user) return res.status(404).json({ message: 'Korisnik nije pronađen' });
+    res.json(user);
+  } catch (err) {
+    console.error('❌ Greška pri dohvaćanju korisnika:', err);
+    res.status(500).json({ message: 'Greška na serveru' });
+  }
+});
+
 
 // -------------------------
 // FAVORITES ROUTES
@@ -53,11 +75,11 @@ router.post('/favorites/:serviceId', authMiddleware, async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Provjera da li servis postoji
+    // Check if service exists
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ message: 'Service not found' });
 
-    // Spriječi duplikate
+    // Prevent duplicates
     if (user.favorites.includes(serviceId)) {
       return res.status(200).json({ message: 'Already in favorites' });
     }
