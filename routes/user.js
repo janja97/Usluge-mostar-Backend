@@ -2,30 +2,26 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
-const path = require('path');
 const User = require('../models/User');
 const Service = require('../models/Service');
-const { updateProfile, getProfile, deleteUser } = require('../controllers/userController');
+const {
+  updateProfile,
+  getProfile,
+  deleteUser,
+  getUserAvatar
+} = require('../controllers/userController');
 
 // -------------------------
-// Multer setup for image uploads
+// Multer setup for memory upload
 // -------------------------
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `${Date.now()}${ext}`);
-  },
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // -------------------------
 // Profile routes (for logged-in user)
 // -------------------------
 
-// PUT update profile with image upload
+// PUT update profile (with image)
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
 
 // GET current user's profile
@@ -35,13 +31,13 @@ router.get('/profile', authMiddleware, getProfile);
 router.delete('/profile', authMiddleware, deleteUser);
 
 // -------------------------
-// Public route: get user by ID (for viewing other profiles)
+// Public route: get user by ID
 // -------------------------
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('-passwordHash') // ne vraćaj hash lozinke
-      .populate('favorites');  // ako imaš reference
+      .select('-passwordHash')
+      .populate('favorites');
     if (!user) return res.status(404).json({ message: 'Korisnik nije pronađen' });
     res.json(user);
   } catch (err) {
@@ -50,6 +46,10 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// -------------------------
+// Public route: get user avatar
+// -------------------------
+router.get('/avatar/:id', getUserAvatar);
 
 // -------------------------
 // FAVORITES ROUTES
@@ -67,19 +67,16 @@ router.get('/favorites', authMiddleware, async (req, res) => {
   }
 });
 
-// POST add a service to favorites
+// POST add service to favorites
 router.post('/favorites/:serviceId', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
     const { serviceId } = req.params;
 
     if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Check if service exists
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ message: 'Service not found' });
 
-    // Prevent duplicates
     if (user.favorites.includes(serviceId)) {
       return res.status(200).json({ message: 'Already in favorites' });
     }
@@ -93,7 +90,7 @@ router.post('/favorites/:serviceId', authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE remove a service from favorites
+// DELETE remove service from favorites
 router.delete('/favorites/:serviceId', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -101,9 +98,7 @@ router.delete('/favorites/:serviceId', authMiddleware, async (req, res) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.favorites = user.favorites.filter(
-      fav => fav.toString() !== serviceId
-    );
+    user.favorites = user.favorites.filter(fav => fav.toString() !== serviceId);
     await user.save();
 
     res.json({ message: 'Service removed from favorites' });
@@ -113,5 +108,5 @@ router.delete('/favorites/:serviceId', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
 
+module.exports = router;
