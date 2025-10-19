@@ -12,6 +12,7 @@ const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/services');
 const favoritesRoutes = require('./routes/favorites');
 const messagesRoutes = require('./routes/messages');
+const reviewsRoutes = require('./routes/reviews'); // ✅ Dodano
 
 const Message = require('./models/Message');
 const Conversation = require('./models/Conversation');
@@ -33,6 +34,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/reviews', reviewsRoutes); // ✅ Dodano
 
 app.get('/', (req, res) => res.send('✅ API is running'));
 
@@ -87,7 +89,6 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // Create and save message
       const message = new Message({
         sender: userId,
         receiver: to,
@@ -95,7 +96,6 @@ io.on('connection', (socket) => {
       });
       await message.save();
 
-      // 🔁 Update or create conversation
       let conversation = await Conversation.findOne({
         participants: { $all: [userId, to] }
       });
@@ -115,13 +115,11 @@ io.on('connection', (socket) => {
         .populate('sender', 'fullName avatar')
         .populate('receiver', 'fullName avatar');
 
-      // Send to receiver if online
       const receiverSocketId = onlineUsers.get(to.toString());
       if (receiverSocketId) {
         io.to(receiverSocketId).emit('newMessage', populatedMsg);
       }
 
-      // Emit back to sender
       socket.emit('newMessage', populatedMsg);
 
       if (ack) ack({ status: 'ok', message: populatedMsg });

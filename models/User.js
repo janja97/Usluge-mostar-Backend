@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const reviewSchema = new mongoose.Schema({
+  reviewer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  rating: { type: Number, min: 1, max: 5, required: true },
+  comment: { type: String, maxlength: 500 },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -15,7 +22,6 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, maxlength: 20, match: /^[0-9+\-\s]*$/ },
   about: { type: String, maxlength: 500 },
 
-  // 🔹 avatar slika pohranjena kao binarni sadržaj
   avatar: {
     data: Buffer,
     contentType: String
@@ -26,6 +32,9 @@ const userSchema = new mongoose.Schema({
   favorites: [
     { type: mongoose.Schema.Types.ObjectId, ref: 'Service' }
   ],
+
+  // 🔹 Novi dio – recenzije korisnika
+  reviews: [reviewSchema],
 
   createdAt: { type: Date, default: Date.now }
 });

@@ -30,21 +30,7 @@ router.get('/profile', authMiddleware, getProfile);
 // DELETE current user account
 router.delete('/profile', authMiddleware, deleteUser);
 
-// -------------------------
-// Public route: get user by ID
-// -------------------------
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id)
-      .select('-passwordHash')
-      .populate('favorites');
-    if (!user) return res.status(404).json({ message: 'Korisnik nije pronađen' });
-    res.json(user);
-  } catch (err) {
-    console.error('❌ Greška pri dohvaćanju korisnika:', err);
-    res.status(500).json({ message: 'Greška na serveru' });
-  }
-});
+
 
 // -------------------------
 // Public route: get user avatar
@@ -108,5 +94,74 @@ router.delete('/favorites/:serviceId', authMiddleware, async (req, res) => {
   }
 });
 
+
+router.post('/:id/reviews', authMiddleware, async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const reviewedUser = await User.findById(req.params.id);
+
+    if (!reviewedUser) {
+      return res.status(404).json({ message: 'Korisnik nije pronađen' });
+    }
+
+    // Provjera: ne možeš sam sebi ostaviti recenziju
+    if (reviewedUser._id.toString() === req.userId) {
+      return res.status(400).json({ message: 'Ne možeš ocijeniti sam sebe.' });
+    }
+
+    // Provjera: već ocijenio?
+    const alreadyReviewed = reviewedUser.reviews.some(
+      (rev) => rev.reviewer.toString() === req.userId
+    );
+    if (alreadyReviewed) {
+      return res.status(400).json({ message: 'Već si ocijenio ovog korisnika.' });
+    }
+
+    // Dodaj novu recenziju
+    const newReview = {
+      reviewer: req.userId,
+      rating,
+      comment
+    };
+
+    reviewedUser.reviews.push(newReview);
+    await reviewedUser.save();
+
+    res.status(201).json({ message: 'Recenzija dodana.', reviews: reviewedUser.reviews });
+  } catch (err) {
+    console.error('❌ Greška pri dodavanju recenzije:', err);
+    res.status(500).json({ message: 'Greška na serveru' });
+  }
+});
+
+// GET - Dohvati sve recenzije korisnika
+router.get('/:id/reviews', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .populate('reviews.reviewer', 'fullName avatar')
+      .select('reviews');
+    if (!user) return res.status(404).json({ message: 'Korisnik nije pronađen' });
+
+    res.json(user.reviews);
+  } catch (err) {
+    console.error('❌ Greška pri dohvaćanju recenzija:', err);
+    res.status(500).json({ message: 'Greška na serveru' });
+  }
+});
+// -------------------------
+// Public route: get user by ID
+// -------------------------
+router.get('/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-passwordHash')
+      .populate('favorites');
+    if (!user) return res.status(404).json({ message: 'Korisnik nije pronađen' });
+    res.json(user);
+  } catch (err) {
+    console.error('❌ Greška pri dohvaćanju korisnika:', err);
+    res.status(500).json({ message: 'Greška na serveru' });
+  }
+});
 
 module.exports = router;

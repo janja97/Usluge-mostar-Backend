@@ -100,6 +100,16 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ message: 'Greška servera' });
   }
 });
+// GET /services/user/:id  -> dohvaća sve usluge određenog korisnika
+router.get('/user/:id', async (req, res) => {
+  try {
+    const services = await Service.find({ user: req.params.id }).populate('user', 'fullName email');
+    res.json(services);
+  } catch (err) {
+    console.error('❌ Greška kod dohvata usluga po user ID-u:', err);
+    res.status(500).json({ message: 'Greška servera' });
+  }
+});
 // ------------------ UPDATE ------------------
 router.put('/:id', authMiddleware, async (req, res) => {
   try {
