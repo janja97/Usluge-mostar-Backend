@@ -7,8 +7,11 @@ const serviceSchema = new mongoose.Schema({
   customService: { type: String },
   priceType: { type: String },
   price: { type: Number },
-  city: { type: String},
+  city: { type: String },
   description: { type: String, maxlength: 200 },
+  mode: { type: String, enum: ['offer', 'demand'], required: true }, 
+  images: [{ type: String }], 
+  mainImg: { type: Number }, 
   createdAt: { type: Date, default: Date.now }
 });
 
