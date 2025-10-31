@@ -12,7 +12,7 @@ const userRoutes = require('./routes/user');
 const serviceRoutes = require('./routes/services');
 const favoritesRoutes = require('./routes/favorites');
 const messagesRoutes = require('./routes/messages');
-const reviewsRoutes = require('./routes/reviews'); // ✅ Dodano
+const reviewsRoutes = require('./routes/reviews');
 
 const Message = require('./models/Message');
 const Conversation = require('./models/Conversation');
@@ -34,7 +34,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/messages', messagesRoutes);
-app.use('/api/reviews', reviewsRoutes); // ✅ Dodano
+app.use('/api/reviews', reviewsRoutes);
 
 app.get('/', (req, res) => res.send('✅ API is running'));
 
@@ -81,21 +81,29 @@ io.on('connection', (socket) => {
   onlineUsers.set(userId.toString(), socket.id);
 
   // 💬 SEND MESSAGE
-  socket.on('sendMessage', async (payload, ack) => {
+  socket.on('sendMessage', async ({ to, content, type }) => {
+    if (!to || !content) return;
+
     try {
-      const { to, content } = payload;
-      if (!to || !content) {
-        if (ack) ack({ status: 'error', message: 'Missing data' });
-        return;
+      // Automatski odredi tip poruke
+      let finalType = type || (content.startsWith('data:image/') ? 'image' : 'text');
+      let finalContent = content;
+
+      // Dodaj prefix ako je image i nema prefiksa
+      if (finalType === 'image' && !content.startsWith('data:image/')) {
+        finalContent = `data:image/jpeg;base64,${content}`;
       }
 
+      // Kreiraj i spremi poruku
       const message = new Message({
         sender: userId,
         receiver: to,
-        content
+        content: finalContent,
+        type: finalType
       });
       await message.save();
 
+      // Kreiraj ili updateaj conversation
       let conversation = await Conversation.findOne({
         participants: { $all: [userId, to] }
       });
@@ -111,25 +119,23 @@ io.on('connection', (socket) => {
       }
       await conversation.save();
 
+      // Populiraj poruku
       const populatedMsg = await message
         .populate('sender', 'fullName avatar')
         .populate('receiver', 'fullName avatar');
 
+      // Pošalji poruku receiveru ako je online
       const receiverSocketId = onlineUsers.get(to.toString());
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('newMessage', populatedMsg);
-      }
+      if (receiverSocketId) io.to(receiverSocketId).emit('newMessage', populatedMsg);
 
+      // Pošalji natrag senderu
       socket.emit('newMessage', populatedMsg);
-
-      if (ack) ack({ status: 'ok', message: populatedMsg });
     } catch (err) {
       console.error('❌ Error sending message:', err);
-      if (ack) ack({ status: 'error', message: 'Server error' });
     }
   });
 
-  // ✅ Mark messages as read
+  // ✅ MARK AS READ
   socket.on('markRead', async ({ conversationWith }) => {
     try {
       if (!conversationWith) return;
@@ -137,6 +143,10 @@ io.on('connection', (socket) => {
         { sender: conversationWith, receiver: userId, isRead: false },
         { $set: { isRead: true } }
       );
+
+      // Notify sender that messages were read
+      const senderSocketId = onlineUsers.get(conversationWith.toString());
+      if (senderSocketId) io.to(senderSocketId).emit('messagesRead', { readerId: userId });
     } catch (err) {
       console.error('❌ Error marking read:', err);
     }
@@ -150,10 +160,7 @@ io.on('connection', (socket) => {
 
 // Mongo connect + server start
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('✅ MongoDB connected');
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
