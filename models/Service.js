@@ -7,6 +7,7 @@ const serviceSchema = new mongoose.Schema({
   customService: { type: String },
   priceType: { type: String },
   price: { type: Number },
+  county: { type: String }, 
   city: { type: String },
   description: { type: String, maxlength: 200 },
   mode: { type: String, enum: ['offer', 'demand'], required: true }, 

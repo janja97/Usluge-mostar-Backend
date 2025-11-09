@@ -11,7 +11,7 @@ const upload = multer({ storage, limits: { fileSize: 1024 * 1024 } }); // max 1M
 router.post('/', authMiddleware, upload.array('images', 10), async (req,res) => {
   try {
     const userId = req.userId;
-    const { category, subcategory, customService, priceType, price, description, city, mode, mainImg } = req.body;
+    const { category, subcategory, customService, priceType, price, description, county, city, mode, mainImg } = req.body;
 
     let images = [];
     if(req.files && req.files.length>0){
@@ -26,6 +26,7 @@ router.post('/', authMiddleware, upload.array('images', 10), async (req,res) => 
       priceType: priceType || '',
       price: price !== undefined ? price : null,
       description: description || '',
+      county: county || '', // ✅
       city: city || '',
       mode,
       images,
@@ -65,13 +66,14 @@ router.get('/', async (req, res) => {
 // ------------------ FILTER ------------------
 router.get('/filter', async (req, res) => {
   try {
-    const { category, subcategory, customService, priceType, minPrice, maxPrice, city, mode } = req.query;
+    const { category, subcategory, customService, priceType, minPrice, maxPrice, county, city, mode } = req.query;
     const filter = {};
 
     if (category) filter.category = category;
     if (subcategory) filter.subcategory = subcategory;
     if (customService) filter.customService = customService;
     if (priceType) filter.priceType = priceType;
+    if (county) filter.county = county;
     if (city) filter.city = city;
     if (mode && ['offer','demand'].includes(mode)) filter.mode = mode; // filter by mode
 
@@ -129,6 +131,7 @@ router.put('/:id', authMiddleware, upload.array('images'), async (req, res) => {
       priceType,
       price,
       description,
+      county,
       city,
       workingDays,
       workingHours,
@@ -170,6 +173,7 @@ router.put('/:id', authMiddleware, upload.array('images'), async (req, res) => {
     service.priceType = priceType || service.priceType;
     service.price = price !== undefined ? Number(price) : service.price;
     service.description = description || service.description;
+    service.county = county || service.county;
     service.city = city || service.city;
     service.workingDays = workingDays || service.workingDays;
     service.workingHours = workingHours || service.workingHours;
