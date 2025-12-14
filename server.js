@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
 
 // Mongo connect + server start
 mongoose
-  .connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGODB_URI) 
   .then(() => {
     console.log('✅ MongoDB connected');
     server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

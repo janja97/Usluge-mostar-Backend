@@ -1,33 +1,71 @@
+// U routers/messages.js
+
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
+const User = require('../models/User'); // 💡 Dodaj referencu na User model (ako već nije gore)
 
-// ------------------- GET CONVERSATIONS -------------------
+// ------------------- GET CONVERSATIONS (POPRAVLJENO) -------------------
 router.get('/conversations', auth, async (req, res) => {
-  try {
-    const conversations = await Conversation.find({ participants: req.userId })
-      .populate({ path: 'lastMessage', select: 'content sender receiver type createdAt isRead' })
-      .sort({ updatedAt: -1 });
+    try {
+        const conversations = await Conversation.find({ participants: req.userId })
+            .populate({ 
+                path: 'lastMessage', 
+                select: 'content sender receiver type createdAt isRead' 
+            })
+            .sort({ updatedAt: -1 });
 
-    if (!conversations.length) return res.json([]);
+        if (!conversations.length) return res.json([]);
 
-    const formatted = conversations.map(conv => {
-      const otherUser = conv.participants.find(p => p.toString() !== req.userId);
-      return {
-        _id: otherUser,
-        lastMessage: conv.lastMessage || null
-      };
-    });
+        // Koristimo Promise.all da paralelno dohvatimo podatke o drugom korisniku
+        const populatedConversations = await Promise.all(conversations.map(async (conv) => {
+            // Pronađi ID drugog korisnika
+            const otherUserId = conv.participants.find(p => p.toString() !== req.userId);
 
-    res.json(formatted);
-  } catch (err) {
-    console.error('❌ Error fetching conversations:', err);
-    res.status(500).json({ message: 'Error fetching conversations' });
-  }
+            if (!otherUserId) {
+                // Ako ne postoji drugi korisnik (npr. pogreška u podacima), preskoči
+                return null; 
+            }
+
+            // Dohvati puno korisničkih podataka (ime, avatar)
+            // BITNO: Ovdje moraš SELECT-ati polje 'avatar' da dobiješ Buffer,
+            // ili selektati polja za Base64 logiku na frontendu (ako su spremljena kao Buffer)
+            const otherUser = await User.findById(otherUserId)
+                                        .select('fullName avatar'); 
+
+            // Formatiranje za Frontend
+            // Vraćamo ključ userData, ID je ID drugog korisnika
+            return {
+                _id: otherUserId, // ID drugog korisnika
+                lastMessage: conv.lastMessage,
+                userData: otherUser ? {
+                    _id: otherUser._id,
+                    fullName: otherUser.fullName,
+                    avatar: otherUser.avatar, // Ovo je ili Buffer ili URL
+                    // Dodaj sva druga polja potrebna na frontendu
+                } : { fullName: 'Unknown User' },
+                // Dodajemo i count nepročitanih za cijelu konverzaciju
+                unreadCount: await Message.countDocuments({
+                    sender: otherUserId,
+                    receiver: req.userId,
+                    isRead: false
+                })
+            };
+        }));
+
+        // Filtriraj eventualne null rezultate (gdje otherUser nije pronađen)
+        res.json(populatedConversations.filter(c => c !== null)); 
+
+    } catch (err) {
+        console.error('❌ Error fetching conversations:', err);
+        res.status(500).json({ message: 'Error fetching conversations' });
+    }
 });
 
+// Ostatak ruta ostaje isti: GET MESSAGES, SEND MESSAGE, MARK AS READ, GET UNREAD COUNT
+// ...
 // ------------------- GET MESSAGES -------------------
 router.get('/:userId', auth, async (req, res) => {
   try {
