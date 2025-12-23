@@ -214,5 +214,3 @@ If validation fails, the connection is rejected.
 | `newMessage` | Server $\rightarrow$ Client | `{ _id: '...', sender: {}, content: '...' }` | Notifies the recipient (and the sender, for confirmation) that a new message has arrived. |
 | `markRead` | Client $\rightarrow$ Server | `{ conversationWith: otherUserId }` | Client notifies the server that all messages from the specified user in the current conversation should be marked as read. |
 
-### 🤝 Contribution
-Contributions are welcome! Please open an issue or submit a pull request for any bugs or feature enhancements.
